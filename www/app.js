@@ -10,6 +10,12 @@
         return http.status !== 404;
     };
     
+    $(document).ready(function () {
+        $('.slides').slick({
+            
+        });
+    });
+    
     /* start by looking for png files, then jpg */
     var elem = document.getElementsByClassName('slides')[0];
     
@@ -17,9 +23,12 @@
         var url = 'img/1.png';
         for (var i = 1; exists(url); i++) {
             var slide = document.createElement('img');
-            slide.setAttribute('src', url);
+            var div = document.createElement('div');
             
-            elem.appendChild(slide);
+            slide.setAttribute('src', url);
+            div.appendChild(slide);
+            
+            elem.appendChild(div);
             
             url = 'img/' + (i+1) + '.png';
             console.log("url: ", url);
