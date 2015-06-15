@@ -10,17 +10,19 @@
 
 #### with `go get`
 
-in your `$GOPATH`, with `$GOPATH/bin` in your `$PATH`:
+from your `$GOPATH`, with `$GOPATH/bin` in your `$PATH`:
 
 ```bash
 $ go get github.com/cdipaolo/slide
 $ go install ./...
-$ slide
+$ cp bin/slide /usr/bin/slide
+
+# now just use as normal!
 ```
 
 # usage
 
-place a pdf of your slideshow (created in whatever) as 'slides.pdf' or (with extensions JPG/JPEG/PNG) images of your slides (named 1.png, 2.png, 3.png, etc.) into a directory (lets call it `slide-dir` for now.) Run the following and open `localhost:3000` (it'll prompt you anyways.) 
+place a pdf of your slideshow (created in whatever) as 'slides.pdf' or (with extensions JPG/JPEG/PNG) images of your slides (named *.png, *.jpg, or *.jpeg as long as the files will sort into the correct order) into a directory (lets call it `slide-dir` for now.) Run the following and open `localhost:3000` (it'll prompt you anyways.) 
 
 That's it.
 
