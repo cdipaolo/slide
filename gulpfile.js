@@ -96,6 +96,6 @@ gulp.task('test', function () {
     
     build(function () {
         // assumes that $GOPATH/bin is in $PATH
-        execute('slide', ['-img=example/png']);
+        execute('slide', ['-img=example/pdf']);
     })
 });

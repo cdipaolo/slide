@@ -69,6 +69,7 @@
         
         
         $('.slides').owlCarousel({
+            navigation: false,
             singleItem : true,
             URLhashListener: true,
             transitionStyle : "fade"

@@ -97,14 +97,40 @@ func main() {
 	}
 	fmt.Printf("Files returned: %v\n\n", files)
 
-	pdf, png, jpg := Match(files)
+	pdfArr, png, jpg := Match(files)
+    pdfLen := len(pdfArr)
 	pngLen := len(png)
 	jpgLen := len(jpg)
 
-	if pdf != nil {
+	if pdfLen != 0 {
 		// migrate pdf to a group of pngs
+        //
+        // image-magick Command:
+        // $ convert file.pdf image.png
+        pdf := pdfArr[0]
         
-	} else if pngLen != 0 {
+        pdfFile := filepath.Join(dir, pdf.Name())
+        output := filepath.Join(dir + "/slide.png")
+        
+        command := exec.Command("convert", pdfFile, output)
+
+        execErr := command.Run()
+        if execErr != nil {
+                panic(fmt.Sprintf("Could not create png's from pdf %v\n\tGot Error <%v>\n\t with output %v\n", pdfFile, execErr, output))
+        }
+        
+        // copy over images again
+        files, err = ioutil.ReadDir("/" + dir)
+        if err != nil {
+            panic(fmt.Sprintf("Could not open directory %v\n\tGot Error %v\n", dir, err))
+        }
+        fmt.Printf("Files returned: %v\n\n", files)
+
+        _, png, _ = Match(files)
+        pngLen = len(png)
+	}
+    
+    if pngLen != 0 {
 		// copy png files over to the tmp directory
 
         for i, file := range png {
@@ -114,7 +140,7 @@ func main() {
 
             execErr := command.Run()
             if execErr != nil {
-                    panic(fmt.Sprintf("Could not copy image %v\n\tGot Error %v\n", dir, err))
+                    panic(fmt.Sprintf("Could not copy image %v\n\tGot Error %v\n", dir, execErr))
             }
             
             fmt.Printf("copied %v\n\t -> %v\n", path, cpPath)
@@ -130,7 +156,7 @@ func main() {
 
             execErr := command.Run()
             if execErr != nil {
-                    panic(fmt.Sprintf("Could not copy image %v\n\tGot Error %v\n", dir, err))
+                    panic(fmt.Sprintf("Could not copy image %v\n\tGot Error %v\n", dir, execErr))
             }
             
             fmt.Printf("copied %v into %v\n", path, cpPath)
@@ -160,7 +186,8 @@ func main() {
 //
 // Returns: a *os.FileInfo for the PDF file, an []os.FileInfo for the PNG files,
 // and an []os.FileInfo for the JPG/JPEG files.
-func Match(files []os.FileInfo) (os.FileInfo, []os.FileInfo, []os.FileInfo) {
+func Match(files []os.FileInfo) ([]os.FileInfo, []os.FileInfo, []os.FileInfo) {
+    pdf := []os.FileInfo{}
 	png := []os.FileInfo{}
 	jpg := []os.FileInfo{}
 
@@ -173,7 +200,9 @@ func Match(files []os.FileInfo) (os.FileInfo, []os.FileInfo, []os.FileInfo) {
 		ext := filepath.Ext(file.Name())
 
 		if ext == ".pdf" {
-			return file, nil, nil
+            // if file matches *.pdf
+            
+            pdf = append(pdf, file)
 
 		} else if ext == ".png" {
 			// if the file matches *.png
@@ -187,5 +216,5 @@ func Match(files []os.FileInfo) (os.FileInfo, []os.FileInfo, []os.FileInfo) {
 		}
 	}
 
-	return nil, png, jpg
+	return pdf, png, jpg
 }
