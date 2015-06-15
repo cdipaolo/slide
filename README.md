@@ -6,9 +6,23 @@
 
 ![screenshot](screenshot.png "slide in action")
 
+# installation
+
+#### with `go get`
+
+in your `$GOPATH`, with `$GOPATH/bin` in your `$PATH`:
+
+```bash
+$ go get github.com/cdipaolo/slide
+$ go install ./...
+$ slide
+```
+
 # usage
 
-place a pdf of your slideshow (created in whatever) as 'slides.pdf' or (with extensions JPG/JPEG/PNG) images of your slides (named 1.png, 2.png, 3.png, etc.) into a directory (lets call it `slide-dir` for now.) Run the following and open `localhost:3000` (it'll prompt you anyways.) That's it.
+place a pdf of your slideshow (created in whatever) as 'slides.pdf' or (with extensions JPG/JPEG/PNG) images of your slides (named 1.png, 2.png, 3.png, etc.) into a directory (lets call it `slide-dir` for now.) Run the following and open `localhost:3000` (it'll prompt you anyways.) 
+
+That's it.
 
 ```bash
 $ cd slide-dir

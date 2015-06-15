@@ -8,41 +8,41 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+    "os/exec"
 	"path"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 )
 
 const (
-    perm os.FileMode = os.FileMode(int(0777))
+	// permissions for the serving directory
+	perm os.FileMode = os.FileMode(int(0777))
 )
 
-var noTmp bool
-var noCopy bool
-var tmp string
-var subDirs []string
-var dir string
+var noTmp bool        // whether to use a base directory other than /tmp
+var tmp string        // temp directory created to serve static files from
+var subDirs []string  // dirs to be made for copying data into www/ dir
+var dir string        // user directory where the slide images reside
 var reducedDir string // tmp minus /www on the end
-var port int64
+var port int64        // port to be used
 
 func init() {
 	// seed rand
 	rand.Seed(time.Now().UTC().UnixNano())
 
-    // set current working directory
+	// set current working directory
 	cwd, err := os.Getwd()
 	if err != nil {
 		panic(fmt.Sprintf("Could not get current working directory\n\tGot Error %v\n", err))
 	}
-    
-    // see if we shouldn't use the /tmp/ directory
-    baseDir := "/tmp/"
-    flag.BoolVar(&noTmp, "no-tmp", false, "Sets if you don't want to use the /tmp/ directory to host the static files, but you want to have the directory be set . Could be used if you want to host this persistantly on a server, although the directory is recopied over every time unless you set '-no-copy'. Defaults to false. When true, baseDir set to '/.slide/'")
-    if noTmp {
-        baseDir = "/.slide/"
-    }
+
+	// see if we shouldn't use the /tmp/ directory
+	baseDir := os.TempDir()
+	flag.BoolVar(&noTmp, "no-tmp", false, "Sets if you don't want to use the /tmp/ directory to host the static files, but you want to have the directory be set . Could be used if you want to host this persistantly on a server, although the directory is recopied over every time unless you set '-no-copy'. Defaults to false. When true, baseDir set to '/.slide/'")
+	if noTmp {
+		baseDir = "/.slide/"
+	}
 
 	// get port
 	flag.Int64Var(&port, "port", 3000, "Sets the port to run the slide application from. Defaults to 3000")
@@ -52,7 +52,7 @@ func init() {
 
 	// set tmp to a tmp/slide directory to serve the static files from
 	flag.StringVar(&reducedDir, "serve", baseDir+".slide/"+strconv.FormatInt(int64(rand.Uint32()), 10), "Assigns the serving directory for the static files. Files will be copies into this directory. Defaults to /tmp/slides{+ some random 32 bit unsigned integer}")
-    tmp = reducedDir + "/www"
+	tmp = reducedDir + "/www"
 
 	// parse flags
 	flag.Parse()
@@ -61,43 +61,83 @@ func init() {
 	if !path.IsAbs(dir) {
 		dir = filepath.Join(cwd, dir)
 	}
-    
-    // set all necessary sub directories to be copied into
-    // later when making tmp directory structure
-    sub := []string{"img"}
-    
-    for _, subDir := range sub {
-        subDirs = append(subDirs, filepath.Join(tmp, subDir))
-    }
+
+	// set all necessary sub directories to be copied into
+	// later when making tmp directory structure
+	sub := []string{"img"}
+
+	for _, subDir := range sub {
+		subDirs = append(subDirs, filepath.Join(tmp, subDir))
+	}
 }
 
 func main() {
-    // copy files over to the new serving directory
-    fmt.Printf("Creating Temp Directories –\n")
-    for _, directory := range subDirs {
-        err := os.MkdirAll(directory, perm)
-        if err != nil {
-            panic(fmt.Sprintf("Could not create directory %v\n\tGot Error %v\n", directory, err))
-        }
-        
-        fmt.Printf("created %v\n", directory)        
-    }
-    
-    err := RestoreAssets(reducedDir, "www")
-    if err != nil {
-        panic(fmt.Sprintf("Could not restore assets in 'www'\n\tGot Error %v\n", err))
-    }
+	// copy files over to the new serving directory
+	fmt.Printf("Creating Temp Directories –\n")
+	for _, directory := range subDirs {
+		err := os.MkdirAll(directory, perm)
+		if err != nil {
+			panic(fmt.Sprintf("Could not create directory %v\n\tGot Error %v\n", directory, err))
+		}
 
-    fmt.Printf("copied 'www/*' into %v\n", reducedDir)   
+		fmt.Printf("created %v\n", directory)
+	}
 
-    
-    // copy over images 
-    files, err := ioutil.ReadDir("/" + dir)
+	err := RestoreAssets(reducedDir, "www")
+	if err != nil {
+		panic(fmt.Sprintf("Could not restore assets in 'www'\n\tGot Error %v\n", err))
+	}
+
+	fmt.Printf("copied 'www/*' into %v\n", reducedDir)
+
+	// copy over images
+	files, err := ioutil.ReadDir("/" + dir)
 	if err != nil {
 		panic(fmt.Sprintf("Could not open directory %v\n\tGot Error %v\n", dir, err))
 	}
 	fmt.Printf("Files returned: %v\n\n", files)
-    
+
+	pdf, png, jpg := Match(files)
+	pngLen := len(png)
+	jpgLen := len(jpg)
+
+	if pdf != nil {
+		// migrate pdf to a group of pngs
+        
+	} else if pngLen != 0 {
+		// copy png files over to the tmp directory
+
+        for i, file := range png {
+            path := filepath.Join(dir, file.Name())
+            cpPath := filepath.Join(tmp, "img", strconv.FormatInt(int64(i+1), 10) + ".png")
+            command := exec.Command("cp", path, cpPath)
+
+            execErr := command.Run()
+            if execErr != nil {
+                    panic(fmt.Sprintf("Could not copy image %v\n\tGot Error %v\n", dir, err))
+            }
+            
+            fmt.Printf("copied %v\n\t -> %v\n", path, cpPath)
+		}
+	} else if jpgLen != 0 {
+		// copy png files over to the tmp directory
+
+        for i, file := range jpg {
+            path := filepath.Join(dir, file.Name())
+            cpPath := filepath.Join(tmp, "img", strconv.FormatInt(int64(i), 10) + ".jpg")
+          
+            command := exec.Command("cp", path, cpPath)
+
+            execErr := command.Run()
+            if execErr != nil {
+                    panic(fmt.Sprintf("Could not copy image %v\n\tGot Error %v\n", dir, err))
+            }
+            
+            fmt.Printf("copied %v into %v\n", path, cpPath)
+		}
+    } else {
+        panic("Slide files not in correct format")
+    }
 
 	// handle file server
 	fs := http.FileServer(http.Dir(tmp))
@@ -106,13 +146,12 @@ func main() {
 	// listen and serve file server
 	portString := ":" + strconv.FormatInt(port, 10)
 
-    fmt.Printf("\nServing %v %v ...", tmp, portString)
+	fmt.Printf("\nServing %v %v ...", tmp, portString)
 	log.Fatal(http.ListenAndServe(portString, nil))
 }
 
 // Match takes in a slice of os.FileInfo's and reduces it to only those files
-// who end with PNG and have a number as the actual file name, JPG/JPEG and
-// have a number as the file name, or PDF and have 'slides' as the file name
+// who end with PNG, JPG/JPEG, or PDF
 //
 // Any file paths not matched will return a nil array or file pointer
 //
@@ -125,38 +164,24 @@ func Match(files []os.FileInfo) (os.FileInfo, []os.FileInfo, []os.FileInfo) {
 	png := []os.FileInfo{}
 	jpg := []os.FileInfo{}
 
-	for i, file := range files {
+	for _, file := range files {
 		if !file.Mode().IsRegular() {
 			continue
 		}
 
 		// split name at '.'
-		name := strings.Split(file.Name(), ".")
-		if len(name) != 2 {
-			// if there is more than 2 'segments' of the file, continue
-			// eg. if the file is slide.1.png –> it should be 1.png
+		ext := filepath.Ext(file.Name())
 
-			continue
-		}
-
-		if file.Name() == "slides.pdf" {
+		if ext == ".pdf" {
 			return file, nil, nil
 
-		} else if name[0] != string(i+1) {
-			// if the name doesn't fit n.ext where n is one more than
-			// the index, continue
-
-			continue
-
-		} else if name[1] == "png" {
-			// if the file matches n.png, where n is one more than the
-			// index, then add it to the array of png files
+		} else if ext == ".png" {
+			// if the file matches *.png
 
 			png = append(png, file)
 
-		} else if name[1] == "jpeg" || name[1] == "jpg" {
-			// if the file matches n.jpg or n.jpeg, where n is one
-			// more than the index, then add it to the array of png files
+		} else if ext == ".jpeg" || ext == ".jpg" {
+			// if the file matches *.jpg or *.jpeg
 
 			jpg = append(jpg, file)
 		}
