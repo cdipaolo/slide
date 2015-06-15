@@ -4,66 +4,119 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
-    "path"
-    "log"
-    "strconv"
 )
 
+const (
+    perm os.FileMode = os.FileMode(int(0777))
+)
+
+var noTmp bool
+var noCopy bool
 var tmp string
+var subDirs []string
 var dir string
+var reducedDir string // tmp minus /www on the end
 var port int64
 
 func init() {
 	// seed rand
 	rand.Seed(time.Now().UTC().UnixNano())
 
-    // get port
-    flag.Int64Var(&port, "port", 3000, "Sets the port to run the slide application from. Defaults to 3000")
+    // set current working directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		panic(fmt.Sprintf("Could not get current working directory\n\tGot Error %v\n", err))
+	}
     
+    // see if we shouldn't use the /tmp/ directory
+    baseDir := "/tmp/"
+    flag.BoolVar(&noTmp, "no-tmp", false, "Sets if you don't want to use the /tmp/ directory to host the static files, but you want to have the directory be set . Could be used if you want to host this persistantly on a server, although the directory is recopied over every time unless you set '-no-copy'. Defaults to false. When true, baseDir set to '/.slide/'")
+    if noTmp {
+        baseDir = "/.slide/"
+    }
+
+	// get port
+	flag.Int64Var(&port, "port", 3000, "Sets the port to run the slide application from. Defaults to 3000")
+
 	// get images directory
-	flag.StringVar(&dir, "img", "."+string(filepath.Separator), "Set the directory containing either slides in pdf form (as slides.pdf), images – .jpg, .jpeg, or .png – separated as (1.png, 2.png, 3.png, etc.) Defaults to current directory.")
-    
+	flag.StringVar(&dir, "img", cwd, "Set the directory containing either slides in pdf form (as slides.pdf), images – .jpg, .jpeg, or .png – separated as (1.png, 2.png, 3.png, etc.) Defaults to current directory.")
+
 	// set tmp to a tmp/slide directory to serve the static files from
-	flag.StringVar(&tmp, "serve", "/tmp/slides"+string(rand.Uint32()), "Assigns the serving directory for the static files. Files will be copies into this directory. Defaults to /tmp/slides{+ some random 32 bit unsigned integer}")
+	flag.StringVar(&reducedDir, "serve", baseDir+".slide/"+strconv.FormatInt(int64(rand.Uint32()), 10), "Assigns the serving directory for the static files. Files will be copies into this directory. Defaults to /tmp/slides{+ some random 32 bit unsigned integer}")
+    tmp = reducedDir + "/www"
 
 	// parse flags
 	flag.Parse()
+
+	// expand dir if applicable
+	if !path.IsAbs(dir) {
+		dir = filepath.Join(cwd, dir)
+	}
     
-        
-    // expand dir if applicable
-    if !path.IsAbs(dir) {
-        cwd, err := os.Getwd()
-        if err != nil {
-            panic(fmt.Sprintf("Could not get current working directory\n\tGot Error %v\n", err))
-        }
-        fmt.Printf("\n\n%v\n\n", dir)
-        dir = filepath.Join(cwd, dir)
+    // set all necessary sub directories to be copied into
+    // later when making tmp directory structure
+    sub := []string{"img"}
+    
+    for _, subDir := range sub {
+        subDirs = append(subDirs, filepath.Join(tmp, subDir))
     }
 }
 
 func main() {
-	files, err := ioutil.ReadDir("/" + dir)
+    // copy files over to the new serving directory
+    fmt.Printf("Creating Temp Directories –\n")
+    for _, directory := range subDirs {
+        err := os.MkdirAll(directory, perm)
+        if err != nil {
+            panic(fmt.Sprintf("Could not create directory %v\n\tGot Error %v\n", directory, err))
+        }
+        
+        fmt.Printf("created %v\n", directory)        
+    }
+    
+    // restore contents of saved binaries to the directory
+    assets, err := AssetDir("www")
+    if err != nil {
+        panic(fmt.Sprintf("Could not get asset directory 'www'\n\tGot Error %v\n", err))
+    }
+    
+    for _, file := range assets {
+        fileName := "www/" + file
+        
+        err = RestoreAsset(reducedDir, fileName)
+        if err != nil {
+            panic(fmt.Sprintf("Could not restore asset %v\n\tGot Error %v\n", fileName, err))
+        }
+        
+        fmt.Printf("\tcopied %v into %v\n", fileName, reducedDir)   
+    }
+    
+    // copy over images 
+    files, err := ioutil.ReadDir("/" + dir)
 	if err != nil {
 		panic(fmt.Sprintf("Could not open directory %v\n\tGot Error %v\n", dir, err))
 	}
+	fmt.Printf("Files returned: %v\n\n", files)
+    
 
-	fmt.Printf("Files returned: %v", files)
-
-    // handle file server
+	// handle file server
 	fs := http.FileServer(http.Dir(tmp))
-    http.Handle("/", fs)
-    
-    // listen and serve file server
-    portString := ":" + strconv.FormatInt(port, 10)
-    
-    fmt.Printf("\nListening on port %v...", portString)
-    log.Fatal(http.ListenAndServe(portString, nil))
+	http.Handle("/", fs)
+
+	// listen and serve file server
+	portString := ":" + strconv.FormatInt(port, 10)
+
+    fmt.Printf("\nServing %v %v ...", tmp, portString)
+	log.Fatal(http.ListenAndServe(portString, nil))
 }
 
 // Match takes in a slice of os.FileInfo's and reduces it to only those files
