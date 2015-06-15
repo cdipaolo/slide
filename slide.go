@@ -83,22 +83,13 @@ func main() {
         fmt.Printf("created %v\n", directory)        
     }
     
-    // restore contents of saved binaries to the directory
-    assets, err := AssetDir("www")
+    err := RestoreAssets(reducedDir, "www")
     if err != nil {
-        panic(fmt.Sprintf("Could not get asset directory 'www'\n\tGot Error %v\n", err))
+        panic(fmt.Sprintf("Could not restore assets in 'www'\n\tGot Error %v\n", err))
     }
-    
-    for _, file := range assets {
-        fileName := "www/" + file
-        
-        err = RestoreAsset(reducedDir, fileName)
-        if err != nil {
-            panic(fmt.Sprintf("Could not restore asset %v\n\tGot Error %v\n", fileName, err))
-        }
-        
-        fmt.Printf("\tcopied %v into %v\n", fileName, reducedDir)   
-    }
+
+    fmt.Printf("copied 'www/*' into %v\n", reducedDir)   
+
     
     // copy over images 
     files, err := ioutil.ReadDir("/" + dir)
