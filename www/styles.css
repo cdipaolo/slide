@@ -1,0 +1,20 @@
+body {
+  background-color: #ededed;
+}
+
+slide {
+  background-color: #fff;
+  width: 700px;
+  height: 1100px;
+  position: absolute;
+  border-radius: 12px;
+}
+
+.center-slide {
+  left: 50%;
+  top: 50%;
+  margin-left: 550px;
+  margin-top: 350px;
+}
+
+.
