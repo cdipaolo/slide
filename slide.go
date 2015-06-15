@@ -39,7 +39,7 @@ func init() {
 
 	// see if we shouldn't use the /tmp/ directory
 	baseDir := os.TempDir()
-	flag.BoolVar(&noTmp, "no-tmp", false, "Sets if you don't want to use the /tmp/ directory to host the static files, but you want to have the directory be set . Could be used if you want to host this persistantly on a server, although the directory is recopied over every time unless you set '-no-copy'. Defaults to false. When true, baseDir set to '/.slide/'")
+	flag.BoolVar(&noTmp, "no-tmp", false, "Sets if you don't want to use the /tmp/ directory to host the static files, but you want to have the directory be set . Could be used if you want to host this persistantly on a server, although this isn't the most practical thing because the files are recopied every time. Defaults to false. When true, baseDir set to '/.slide/'")
 	if noTmp {
 		baseDir = "/.slide/"
 	}
@@ -51,7 +51,7 @@ func init() {
 	flag.StringVar(&dir, "img", cwd, "Set the directory containing either slides in pdf form (as slides.pdf), images – .jpg, .jpeg, or .png – separated as (1.png, 2.png, 3.png, etc.) Defaults to current directory.")
 
 	// set tmp to a tmp/slide directory to serve the static files from
-	flag.StringVar(&reducedDir, "serve", baseDir+".slide/"+strconv.FormatInt(int64(rand.Uint32()), 10), "Assigns the serving directory for the static files. Files will be copies into this directory. Defaults to /tmp/slides{+ some random 32 bit unsigned integer}")
+	flag.StringVar(&reducedDir, "serve", baseDir+".slide/"+strconv.FormatInt(int64(rand.Uint32()), 10), "Assigns the serving directory for the static files. Files will be copies into this directory. Defaults to {operating system temp dir}/slides{+ some random 32 bit unsigned integer}")
 	tmp = reducedDir + "/www"
 
 	// parse flags
