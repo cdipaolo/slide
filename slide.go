@@ -12,19 +12,20 @@ import (
 	"time"
     "path"
     "log"
-)
-
-const (
-    Port = ":3000"
+    "strconv"
 )
 
 var tmp string
 var dir string
+var port int64
 
 func init() {
 	// seed rand
 	rand.Seed(time.Now().UTC().UnixNano())
 
+    // get port
+    flag.Int64Var(&port, "port", 3000, "Sets the port to run the slide application from. Defaults to 3000")
+    
 	// get images directory
 	flag.StringVar(&dir, "img", "."+string(filepath.Separator), "Set the directory containing either slides in pdf form (as slides.pdf), images – .jpg, .jpeg, or .png – separated as (1.png, 2.png, 3.png, etc.) Defaults to current directory.")
     
@@ -59,8 +60,10 @@ func main() {
     http.Handle("/", fs)
     
     // listen and serve file server
-    fmt.Printf("\nListening on port %v...", Port)
-    log.Fatal(http.ListenAndServe(Port, nil))
+    portString := ":" + strconv.FormatInt(port, 10)
+    
+    fmt.Printf("\nListening on port %v...", portString)
+    log.Fatal(http.ListenAndServe(portString, nil))
 }
 
 // Match takes in a slice of os.FileInfo's and reduces it to only those files
