@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+    "path"
+    "log"
 )
 
 const (
@@ -25,16 +27,27 @@ func init() {
 
 	// get images directory
 	flag.StringVar(&dir, "img", "."+string(filepath.Separator), "Set the directory containing either slides in pdf form (as slides.pdf), images – .jpg, .jpeg, or .png – separated as (1.png, 2.png, 3.png, etc.) Defaults to current directory.")
-
+    
 	// set tmp to a tmp/slide directory to serve the static files from
 	flag.StringVar(&tmp, "serve", "/tmp/slides"+string(rand.Uint32()), "Assigns the serving directory for the static files. Files will be copies into this directory. Defaults to /tmp/slides{+ some random 32 bit unsigned integer}")
 
 	// parse flags
 	flag.Parse()
+    
+        
+    // expand dir if applicable
+    if !path.IsAbs(dir) {
+        cwd, err := os.Getwd()
+        if err != nil {
+            panic(fmt.Sprintf("Could not get current working directory\n\tGot Error %v\n", err))
+        }
+        fmt.Printf("\n\n%v\n\n", dir)
+        dir = filepath.Join(cwd, dir)
+    }
 }
 
 func main() {
-	files, err := ioutil.ReadDir(dir)
+	files, err := ioutil.ReadDir("/" + dir)
 	if err != nil {
 		panic(fmt.Sprintf("Could not open directory %v\n\tGot Error %v\n", dir, err))
 	}
@@ -47,6 +60,7 @@ func main() {
     
     // listen and serve file server
     fmt.Printf("\nListening on port %v...", Port)
+    log.Fatal(http.ListenAndServe(Port, nil))
 }
 
 // Match takes in a slice of os.FileInfo's and reduces it to only those files
