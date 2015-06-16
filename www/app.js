@@ -27,7 +27,6 @@
                 slide.setAttribute('src', url);
                 slide.setAttribute('class', 'slide')
                 div.setAttribute('class', 'slide-container');
-                div.setAttribute('data-hash', "slide"+i);
 
                 div.appendChild(slide);
 
@@ -48,7 +47,6 @@
                 slide.setAttribute('src', url);
                 slide.setAttribute('class', 'slide')
                 div.setAttribute('class', 'slide-container');
-                div.setAttribute('data-hash', "slide"+i);
 
                 div.appendChild(slide);
 
@@ -68,17 +66,15 @@
         }
         
         
-        $('.slides').owlCarousel({
-            navigation: false,
-            singleItem : true,
-            URLhashListener: true,
-            transitionStyle : "fade"
-        });
+        var owl = $('.slides')
         
-        var owl = $('.owl-carousel');
-        owl.on('changed.owl.carousel', function(event) {
-            console.log("event: ", event);
-        })
+        owl.owlCarousel({
+            navigation: false,
+            items: 1,
+            center: true
+        });
+
+        console.log('Owl!', owl);    
         
         var arrowCheck = function (e) {
 
@@ -88,19 +84,13 @@
                 // left arrow
                 console.log('Clicked left arrow');
                 
-                if (currentSlide > 1) {
-                    currentSlide--;
-                    location.hash = "#slide" + currentSlide;
-                }
+                owl.trigger('prev.owl.carousel');
             }
-            else if (e.keyCode == '39') {
-                // right arrow
-                console.log('Clicked right arrow');
-
-                if (currentSlide < slides) {
-                    currentSlide++;
-                    location.hash = "#slide" + currentSlide;
-                }
+            else if (e.keyCode == '39' || e.keyCode == '32') {
+                // right arrow or spacebar clicked
+                console.log((e.keyCode == '39') ? 'Clicked right arrow' : 'Clicked spacebar');
+                
+                owl.trigger('next.owl.carousel');
             }
         }
         

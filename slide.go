@@ -172,7 +172,7 @@ func main() {
 	// listen and serve file server
 	portString := ":" + strconv.FormatInt(port, 10)
 
-	fmt.Printf("\nServing %v %v ...", tmp, portString)
+	fmt.Printf("\nServing %v %v ...\n", tmp, portString)
 	log.Fatal(http.ListenAndServe(portString, nil))
 }
 
