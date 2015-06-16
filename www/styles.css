@@ -6,7 +6,6 @@ body {
 
 .slides-wrapper {
     height: 700px;
-    
     position: absolute;
     left: 0;
     right: 0;
@@ -31,6 +30,7 @@ body {
 
 .slide {
     width: 100%;
+    border-radius: 12px;
     position: absolute;
     top: -9999px;
     bottom: -9999px;
