@@ -34,6 +34,8 @@ $ cp bin/slide /usr/bin/slide
 
 place a pdf of your slideshow (created in whatever) as 'slides.pdf' or (with extensions JPG/JPEG/PNG) images of your slides (named *.png, *.jpg, or *.jpeg as long as the files will sort into the correct order) into a directory (lets call it `slide-dir` for now.) Run the following and open `localhost:3000` (it'll prompt you anyways.) 
 
+As a note: slides will render better (have corners) if they are 1100px x 700px. This is the same as Golang's `present` rendering resolution.
+
 That's it.
 
 ```bash
