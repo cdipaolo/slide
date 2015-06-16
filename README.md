@@ -47,7 +47,7 @@ $ slide
 
 - `-no-tmp` : Sets if you don't want to use the /tmp/ directory to host the static files, but you want to have the directory be set . Could be used if you want to host this persistantly on a server, although this isn't the most practical thing because the files are recopied every time. Defaults to false. When true, baseDir set to `/.slide/`
 - `-port` : Sets the port to run the slide application from. Defaults to 3000
-- `-img` : Set the directory containing either slides in pdf form (as slides.pdf), images – .jpg, .jpeg, or .png – separated as (1.png, 2.png, 3.png, etc.) Defaults to current directory. You'll need to not include '~' in the path as well. '.' will be expanded by Go but unless your bash will expand the path before passing it the server will not recognize the path.
+- `-img` : Set the directory containing either slides in pdf form (as slides.pdf), images – .jpg, .jpeg, or .png – separated as (1.png, 2.png, 3.png, etc.) Defaults to current directory. You'll need to not include '~' in the path as well. '.' will be expanded by Go but unless your bash will expand any other path before passing it the server will not recognize the path.
 - `-serve` : Assigns the serving directory for the static files. Files will be copies into this directory. Defaults to {operating system temp dir}/slides{+ some random 32 bit unsigned integer}
 
 # license: MIT
